@@ -9,7 +9,6 @@ export async function GET(request: NextRequest) {
   try {
     const dbInstance = await db;
     const allCategories = await dbInstance.select().from(categories);
-    console.log(allCategories);
 
     return NextResponse.json({
       data: allCategories,
@@ -25,16 +24,17 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { name, description } = body;
+    const { title, url, description } = body;
 
-    if (!name) {
-      return NextResponse.json({ error: 'Category name is required' }, { status: 400 });
+    if (!title) {
+      return NextResponse.json({ error: 'Category title is required' }, { status: 400 });
     }
 
     const dbInstance = await db;
     const newCategory = await dbInstance.insert(categories)
       .values({
-        name,
+        title,
+        url,
         description,
       })
       .returning();
@@ -53,16 +53,17 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, name, description } = body;
+    const { id, title, url, description } = body;
 
-    if (!id || !name) {
-      return NextResponse.json({ error: 'Category ID and name are required' }, { status: 400 });
+    if (!id || !title) {
+      return NextResponse.json({ error: 'Category ID and title are required' }, { status: 400 });
     }
 
     const dbInstance = await db;
     const updatedCategory = await dbInstance.update(categories)
       .set({
-        name,
+        title,
+        url,
         description,
         updatedAt: new Date()
       })
