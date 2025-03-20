@@ -87,6 +87,36 @@ ai-site-be/
 
 服务运行后，API 文档可在 `/api/docs` 路径查看。
 
+### 模型 API 示例
+
+#### 发送对话请求
+
+```bash
+curl -X POST http://localhost:3000/api/completions \
+  -H "Content-Type: application/json" \
+  -d '{
+    "messages": [
+      {
+        "role": "user",
+        "content": "介绍一下你自己"
+      }
+    ],
+    "temperature": 0.7,
+    "max_tokens": 500
+  }'
+```
+
+可选查询参数:
+- `model`: 指定要使用的模型（默认: Qwen/QwQ-32B）
+
+请求主体参数:
+- `messages`: 消息数组，包含用户和助手的对话历史
+- `temperature`: 温度参数，控制随机性（默认: 0.7）
+- `max_tokens`: 最大生成令牌数（默认: 512）
+- `top_p`: 核采样概率（默认: 0.7）
+- `top_k`: 限制考虑的最高概率标记数量（默认: 50）
+- `frequency_penalty`: 频率惩罚系数（默认: 0.5）
+
 ## 部署
 
 ### 使用 Vercel 部署

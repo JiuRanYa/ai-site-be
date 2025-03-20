@@ -33,6 +33,10 @@ const config = {
     openai: {
       apiKey: process.env.OPENAI_API_KEY || '',
     },
+    siliconFlow: {
+      apiKey: process.env.SILICON_FLOW_API_KEY || '',
+      baseUrl: 'https://api.siliconflow.cn/v1',
+    },
   },
 };
 
