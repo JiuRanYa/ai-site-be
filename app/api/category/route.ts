@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { eq } from "drizzle-orm";
-import { db } from "@/db";
+import db from "@/db";
 import { categories } from "@/db/schema";
 
 // 获取所有类别
@@ -9,6 +9,7 @@ export async function GET(request: NextRequest) {
   try {
     const dbInstance = await db;
     const allCategories = await dbInstance.select().from(categories);
+    console.log(allCategories);
 
     return NextResponse.json({
       data: allCategories,
