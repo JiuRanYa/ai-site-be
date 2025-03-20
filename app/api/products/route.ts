@@ -61,10 +61,10 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, url, description, tags } = body;
+    const { title, url, description, tags, categoryId } = body;
 
-    if (!title) {
-      return NextResponse.json({ error: 'Product title is required' }, { status: 400 });
+    if (!title || !categoryId) {
+      return NextResponse.json({ error: 'Product title and category ID are required' }, { status: 400 });
     }
 
     const dbInstance = await db;
@@ -74,6 +74,7 @@ export async function POST(request: NextRequest) {
         url,
         description,
         tags,
+        categoryId
       })
       .returning();
 
@@ -91,10 +92,10 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, title, url, description } = body;
+    const { id, title, url, description, categoryId } = body;
 
-    if (!id || !title) {
-      return NextResponse.json({ error: 'Product ID and title are required' }, { status: 400 });
+    if (!id || !title || !categoryId) {
+      return NextResponse.json({ error: 'Product ID, title, and category ID are required' }, { status: 400 });
     }
 
     const dbInstance = await db;
@@ -103,6 +104,7 @@ export async function PUT(request: NextRequest) {
         title,
         url,
         description,
+        categoryId,
         updatedAt: new Date()
       })
       .where(eq(products.id, id))
