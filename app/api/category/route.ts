@@ -1,4 +1,5 @@
 import { NextRequest } from "next/server";
+import db from "@/db";
 
 import { NextResponse } from "next/server";
 
@@ -10,6 +11,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     const category = body.category;
+    console.log(db)
 
     if (!category) {
       return NextResponse.json({ error: 'Category is required' }, { status: 400 });
