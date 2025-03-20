@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
 
     // 检查是否有 API 密钥
     const apiKey = config.services.siliconFlow.apiKey;
+
     if (!apiKey) {
       return NextResponse.json(
         { 
