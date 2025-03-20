@@ -15,6 +15,13 @@
       "when": 1742453735526,
       "tag": "0001_spicy_nova",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1742455161708,
+      "tag": "0002_harsh_havok",
+      "breakpoints": true
     }
   ]
 }
