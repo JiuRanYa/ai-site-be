@@ -15,6 +15,5 @@ export const products = pgTable('products', {
   description: text('description'),
   createdAt: timestamp('created_at').defaultNow().notNull(),
   updatedAt: timestamp('updated_at').defaultNow().notNull(),
-  categoryId: integer('category_id').references(() => categories.id),
   image: text('image'),
 }); 
