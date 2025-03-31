@@ -46,7 +46,13 @@ export async function POST(request: NextRequest) {
         top_k: top_k,
         frequency_penalty: frequency_penalty,
         n: 1,
-        messages: [{"content":message,"role":"user"}]
+        messages: [
+          {
+            "content":" 你是一个句子补全专家，请根据用户输入的句子，补全句子。请直接返回补全后的句子，不要输出任何解释。回复中请不要带有任何换行符。",
+            "role":"system"
+          },
+          {"content":message,"role":"user"}, 
+        ]
       })
     };
     
