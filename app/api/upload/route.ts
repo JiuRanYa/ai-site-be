@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
-import { supabase } from "@/lib/supabase";
+import { s3Client } from "@/lib/s3-client";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 // CORS 配置
 const corsHeaders = {
-  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Origin': 'http://localhost:3000',
   'Access-Control-Allow-Methods': 'POST, OPTIONS',
   'Access-Control-Allow-Headers': 'Content-Type, Authorization',
 };
@@ -33,43 +34,53 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 验证文件大小（2MB限制）
+    if (file.size > 2 * 1024 * 1024) {
+      return NextResponse.json(
+        { error: '文件大小不能超过2MB' },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
     // 生成唯一的文件名
     const timestamp = Date.now();
-    const fileName = `${timestamp}-${file.name}`;
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${timestamp}-${Math.random().toString(36).substring(7)}.${fileExt}`;
 
     // 将文件转换为 ArrayBuffer
     const arrayBuffer = await file.arrayBuffer();
     const fileBuffer = Buffer.from(arrayBuffer);
 
-    // 上传到 Supabase Storage
-    const { data, error } = await supabase.storage
-      .from('image') // 确保在 Supabase 中创建了这个 bucket
-      .upload(fileName, fileBuffer, {
-        contentType: file.type,
-        cacheControl: '3600',
-        upsert: false
+    // 上传到 Supabase Storage（通过 S3 客户端）
+    try {
+      const command = new PutObjectCommand({
+        Bucket: 'images',
+        Key: fileName,
+        Body: fileBuffer,
+        ContentType: file.type,
+        CacheControl: 'max-age=3600'
       });
 
-    if (error) {
-      console.error('Upload error:', error);
+      await s3Client.send(command);
+
+      // 构建公共访问 URL
+      const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${fileName}`;
+
+      return NextResponse.json({
+        data: {
+          url: publicUrl,
+          fileName: fileName
+        },
+        status: 'success'
+      }, { headers: corsHeaders });
+
+    } catch (uploadError) {
+      console.error('S3 upload error:', uploadError);
       return NextResponse.json(
-        { error: '上传失败' },
+        { error: '上传失败: ' + (uploadError as Error).message },
         { status: 500, headers: corsHeaders }
       );
     }
-
-    // 获取文件的公共 URL
-    const { data: { publicUrl } } = supabase.storage
-      .from('images')
-      .getPublicUrl(fileName);
-
-    return NextResponse.json({
-      data: {
-        url: publicUrl,
-        fileName: fileName
-      },
-      status: 'success'
-    }, { headers: corsHeaders });
 
   } catch (error) {
     console.error('Error uploading file:', error);
