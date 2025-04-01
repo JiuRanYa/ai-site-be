@@ -8,18 +8,26 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url);
     const page = parseInt(searchParams.get('page') || '1');
-    const pageSize = parseInt(searchParams.get('pageSize') || '10');
+    const pageSizeParam = searchParams.get('pageSize') || '10';
     const query = searchParams.get('q') || '';
     const category = searchParams.get('category');
 
     // 验证分页参数
-    if (page < 1 || pageSize < 1) {
+    if (page < 1) {
       return NextResponse.json({ 
-        error: '页码和每页数量必须大于0' 
+        error: '页码必须大于0' 
       }, { status: 400 });
     }
 
-    const offset = (page - 1) * pageSize;
+    // 处理 pageSize=all 的情况
+    const pageSize = pageSizeParam === 'all' ? undefined : parseInt(pageSizeParam);
+    if (pageSize !== undefined && pageSize < 1) {
+      return NextResponse.json({ 
+        error: '每页数量必须大于0' 
+      }, { status: 400 });
+    }
+
+    const offset = pageSize ? (page - 1) * pageSize : undefined;
     const dbInstance = await db;
 
     // 构建查询条件
@@ -48,17 +56,22 @@ export async function GET(request: NextRequest) {
       .from(products)
       .where(whereCondition) as [{ count: number }];
 
-    // 获取分页数据
-    const items = await dbInstance
+    // 获取数据
+    let queryBuilder = dbInstance
       .select()
       .from(products)
       .where(whereCondition)
-      .orderBy(products.createdAt)
-      .limit(pageSize)
-      .offset(offset);
+      .orderBy(products.createdAt);
 
-    // 计算总页数
-    const totalPages = Math.ceil(count / pageSize);
+    // 如果指定了分页，添加分页限制
+    if (pageSize && offset !== undefined) {
+      queryBuilder = queryBuilder.limit(pageSize).offset(offset);
+    }
+
+    const items = await queryBuilder;
+
+    // 计算分页信息
+    const totalPages = pageSize ? Math.ceil(count / pageSize) : 1;
 
     return NextResponse.json({
       data: {
@@ -67,8 +80,8 @@ export async function GET(request: NextRequest) {
           total: count,
           totalPages,
           currentPage: page,
-          pageSize,
-          hasMore: page < totalPages
+          pageSize: pageSize || count,
+          hasMore: pageSize ? page < totalPages : false
         }
       },
       status: 'success',
