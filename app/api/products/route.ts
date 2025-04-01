@@ -10,7 +10,6 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1');
     const pageSizeParam = searchParams.get('pageSize') || '10';
     const query = searchParams.get('q') || '';
-    const category = searchParams.get('category');
 
     // 验证分页参数
     if (page < 1) {
@@ -41,14 +40,6 @@ export async function GET(request: NextRequest) {
         sql`${products.tags}::text ILIKE ${`%${query}%`}`
       );
     }
-
-    // 如果有分类，添加分类条件
-    if (category) {
-      const categoryCondition = eq(products.categoryId, parseInt(category));
-      whereCondition = whereCondition 
-        ? or(whereCondition, categoryCondition)
-        : categoryCondition;
-    }
     
     // 获取总记录数
     const [{ count }] = await dbInstance
@@ -65,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // 如果指定了分页，添加分页限制
     if (pageSize && offset !== undefined) {
-      queryBuilder = queryBuilder.limit(pageSize).offset(offset);
+      queryBuilder = queryBuilder.limit(pageSize).offset(offset) as any;
     }
 
     const items = await queryBuilder;
@@ -100,11 +91,11 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { title, url, description, tags, categoryId } = body;
+    const { title, url, description, tags } = body;
 
-    if (!title || !categoryId) {
+    if (!title) {
       return NextResponse.json(
-        { error: '产品标题和分类ID是必需的' },
+        { error: '产品标题是必需的' },
         { status: 400 }
       );
     }
@@ -115,8 +106,7 @@ export async function POST(request: NextRequest) {
         title,
         url,
         description,
-        tags,
-        categoryId
+        tags
       })
       .returning();
 
@@ -137,11 +127,11 @@ export async function POST(request: NextRequest) {
 export async function PUT(request: NextRequest) {
   try {
     const body = await request.json();
-    const { id, title, url, description, categoryId } = body;
+    const { id, title, url, description } = body;
 
-    if (!id || !title || !categoryId) {
+    if (!id || !title) {
       return NextResponse.json(
-        { error: '产品ID、标题和分类ID是必需的' },
+        { error: '产品ID和标题是必需的' },
         { status: 400 }
       );
     }
@@ -152,7 +142,6 @@ export async function PUT(request: NextRequest) {
         title,
         url,
         description,
-        categoryId,
         updatedAt: new Date()
       })
       .where(eq(products.id, id))
