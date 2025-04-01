@@ -1,13 +1,7 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { eq, sql, ilike, or } from "drizzle-orm";
 import db from "@/db";
 import { products } from "@/db/schema";
-import { corsResponse, corsOptionsResponse } from "@/lib/cors";
-
-// OPTIONS 预检请求处理
-export async function OPTIONS() {
-  return corsOptionsResponse();
-}
 
 // 获取所有产品（支持分页和搜索）
 export async function GET(request: NextRequest) {
@@ -20,9 +14,9 @@ export async function GET(request: NextRequest) {
 
     // 验证分页参数
     if (page < 1 || pageSize < 1) {
-      return corsResponse({ 
+      return NextResponse.json({ 
         error: '页码和每页数量必须大于0' 
-      }, 400);
+      }, { status: 400 });
     }
 
     const offset = (page - 1) * pageSize;
@@ -66,7 +60,7 @@ export async function GET(request: NextRequest) {
     // 计算总页数
     const totalPages = Math.ceil(count / pageSize);
 
-    return corsResponse({
+    return NextResponse.json({
       data: {
         items,
         pagination: {
@@ -82,9 +76,9 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('Error fetching products:', error);
-    return corsResponse(
+    return NextResponse.json(
       { error: '获取产品列表失败' },
-      500
+      { status: 500 }
     );
   }
 }
@@ -96,9 +90,9 @@ export async function POST(request: NextRequest) {
     const { title, url, description, tags, categoryId } = body;
 
     if (!title || !categoryId) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '产品标题和分类ID是必需的' },
-        400
+        { status: 400 }
       );
     }
 
@@ -113,15 +107,15 @@ export async function POST(request: NextRequest) {
       })
       .returning();
 
-    return corsResponse({
+    return NextResponse.json({
       data: newProduct[0],
       status: 'success',
     });
   } catch (error) {
     console.error('Error creating product:', error);
-    return corsResponse(
+    return NextResponse.json(
       { error: '创建产品失败' },
-      500
+      { status: 500 }
     );
   }
 }
@@ -133,9 +127,9 @@ export async function PUT(request: NextRequest) {
     const { id, title, url, description, categoryId } = body;
 
     if (!id || !title || !categoryId) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '产品ID、标题和分类ID是必需的' },
-        400
+        { status: 400 }
       );
     }
 
@@ -152,21 +146,21 @@ export async function PUT(request: NextRequest) {
       .returning();
 
     if (updatedProduct.length === 0) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '未找到指定的产品' },
-        404
+        { status: 404 }
       );
     }
 
-    return corsResponse({
+    return NextResponse.json({
       data: updatedProduct[0],
       status: 'success',
     });
   } catch (error) {
     console.error('Error updating product:', error);
-    return corsResponse(
+    return NextResponse.json(
       { error: '更新产品失败' },
-      500
+      { status: 500 }
     );
   }
 }
@@ -178,9 +172,9 @@ export async function DELETE(request: NextRequest) {
     const id = searchParams.get('id');
 
     if (!id) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '产品ID是必需的' },
-        400
+        { status: 400 }
       );
     }
 
@@ -190,22 +184,22 @@ export async function DELETE(request: NextRequest) {
       .returning();
 
     if (deletedProduct.length === 0) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '未找到指定的产品' },
-        404
+        { status: 404 }
       );
     }
 
-    return corsResponse({
+    return NextResponse.json({
       data: deletedProduct[0],
       status: 'success',
       message: '产品删除成功'
     });
   } catch (error) {
     console.error('Error deleting product:', error);
-    return corsResponse(
+    return NextResponse.json(
       { error: '删除产品失败' },
-      500
+      { status: 500 }
     );
   }
 }

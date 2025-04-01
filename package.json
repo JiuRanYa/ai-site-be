@@ -4,9 +4,9 @@
   "description": "基于 Next.js 开发的 AI 站点后端服务，提供 API 接口和服务端功能。",
   "main": "index.js",
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3001",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p 3001",
     "lint": "next lint",
     "db:generate": "drizzle-kit generate",
     "db:push": "drizzle-kit push:pg",

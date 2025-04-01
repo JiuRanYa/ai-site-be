@@ -1,7 +1,6 @@
-import { NextRequest } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
 import { s3Client } from "@/lib/s3-client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { corsResponse, corsOptionsResponse } from "@/lib/cors";
 
 // OPTIONS 预检请求处理
 export async function OPTIONS() {
@@ -16,9 +15,9 @@ export async function POST(request: NextRequest) {
 
     if (bucketsError) {
       console.error('Bucket error:', bucketsError);
-      return corsResponse(
+      return NextResponse.json(
         { error: '存储配置错误' },
-        500
+        { status: 500 }
       );
     }
 
@@ -35,9 +34,9 @@ export async function POST(request: NextRequest) {
 
       if (createBucketError) {
         console.error('Create bucket error:', createBucketError);
-        return corsResponse(
+        return NextResponse.json(
           { error: '创建存储空间失败' },
-          500
+          { status: 500 }
         );
       }
     }
@@ -46,25 +45,25 @@ export async function POST(request: NextRequest) {
     const file = formData.get('file') as File;
 
     if (!file) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '没有找到文件' },
-        400
+        { status: 400 }
       );
     }
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '只支持图片文件' },
-        400
+        { status: 400 }
       );
     }
 
     // 验证文件大小（2MB限制）
     if (file.size > 2 * 1024 * 1024) {
-      return corsResponse(
+      return NextResponse.json(
         { error: '文件大小不能超过2MB' },
-        400
+        { status: 400 }
       );
     }
 
@@ -92,7 +91,7 @@ export async function POST(request: NextRequest) {
       // 构建公共访问 URL
       const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${fileName}`;
 
-      return corsResponse({
+      return NextResponse.json({
         data: {
           url: publicUrl,
           fileName: fileName
@@ -102,17 +101,17 @@ export async function POST(request: NextRequest) {
 
     } catch (uploadError) {
       console.error('S3 upload error:', uploadError);
-      return corsResponse(
+      return NextResponse.json(
         { error: '上传失败: ' + (uploadError as Error).message },
-        500
+        { status: 500 }
       );
     }
 
   } catch (error) {
     console.error('Error uploading file:', error);
-    return corsResponse(
+    return NextResponse.json(
       { error: '上传失败' },
-      500
+      { status: 500 }
     );
   }
 } 
