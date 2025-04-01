@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       .select()
       .from(products)
       .where(whereCondition)
-      .orderBy(products.createdAt);
+      .orderBy(sql`${products.createdAt} DESC`);
 
     // 如果指定了分页，添加分页限制
     if (pageSize && offset !== undefined) {
