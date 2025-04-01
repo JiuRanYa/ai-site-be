@@ -1,44 +1,70 @@
-import { NextRequest, NextResponse } from "next/server";
+import { NextRequest } from "next/server";
 import { s3Client } from "@/lib/s3-client";
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-
-// CORS 配置
-const corsHeaders = {
-  'Access-Control-Allow-Origin': 'http://localhost:3000',
-  'Access-Control-Allow-Methods': 'POST, OPTIONS',
-  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
-};
+import { corsResponse, corsOptionsResponse } from "@/lib/cors";
 
 // OPTIONS 预检请求处理
 export async function OPTIONS() {
-  return NextResponse.json({}, { headers: corsHeaders });
+  return corsOptionsResponse();
 }
 
 export async function POST(request: NextRequest) {
   try {
+    // 验证 bucket 是否存在
+    const { data: buckets, error: bucketsError } = await s3Client
+      .listBuckets({});
+
+    if (bucketsError) {
+      console.error('Bucket error:', bucketsError);
+      return corsResponse(
+        { error: '存储配置错误' },
+        500
+      );
+    }
+
+    // 检查 images bucket 是否存在，如果不存在则创建
+    const imagesBucket = buckets?.Buckets?.find(b => b.Name === 'images');
+    if (!imagesBucket) {
+      const { error: createBucketError } = await s3Client
+        .createBucket({
+          Bucket: 'images',
+          CreateBucketConfiguration: {
+            LocationConstraint: 'us-east-1'
+          }
+        });
+
+      if (createBucketError) {
+        console.error('Create bucket error:', createBucketError);
+        return corsResponse(
+          { error: '创建存储空间失败' },
+          500
+        );
+      }
+    }
+
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
     if (!file) {
-      return NextResponse.json(
+      return corsResponse(
         { error: '没有找到文件' },
-        { status: 400, headers: corsHeaders }
+        400
       );
     }
 
     // 验证文件类型
     if (!file.type.startsWith('image/')) {
-      return NextResponse.json(
+      return corsResponse(
         { error: '只支持图片文件' },
-        { status: 400, headers: corsHeaders }
+        400
       );
     }
 
     // 验证文件大小（2MB限制）
     if (file.size > 2 * 1024 * 1024) {
-      return NextResponse.json(
+      return corsResponse(
         { error: '文件大小不能超过2MB' },
-        { status: 400, headers: corsHeaders }
+        400
       );
     }
 
@@ -66,27 +92,27 @@ export async function POST(request: NextRequest) {
       // 构建公共访问 URL
       const publicUrl = `${process.env.NEXT_PUBLIC_SUPABASE_URL}/storage/v1/object/public/images/${fileName}`;
 
-      return NextResponse.json({
+      return corsResponse({
         data: {
           url: publicUrl,
           fileName: fileName
         },
         status: 'success'
-      }, { headers: corsHeaders });
+      });
 
     } catch (uploadError) {
       console.error('S3 upload error:', uploadError);
-      return NextResponse.json(
+      return corsResponse(
         { error: '上传失败: ' + (uploadError as Error).message },
-        { status: 500, headers: corsHeaders }
+        500
       );
     }
 
   } catch (error) {
     console.error('Error uploading file:', error);
-    return NextResponse.json(
+    return corsResponse(
       { error: '上传失败' },
-      { status: 500, headers: corsHeaders }
+      500
     );
   }
 } 
