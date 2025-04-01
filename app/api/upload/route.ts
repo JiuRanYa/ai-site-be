@@ -4,43 +4,11 @@ import { PutObjectCommand } from "@aws-sdk/client-s3";
 
 // OPTIONS 预检请求处理
 export async function OPTIONS() {
-  return corsOptionsResponse();
+  return NextResponse.json({});
 }
 
 export async function POST(request: NextRequest) {
   try {
-    // 验证 bucket 是否存在
-    const { data: buckets, error: bucketsError } = await s3Client
-      .listBuckets({});
-
-    if (bucketsError) {
-      console.error('Bucket error:', bucketsError);
-      return NextResponse.json(
-        { error: '存储配置错误' },
-        { status: 500 }
-      );
-    }
-
-    // 检查 images bucket 是否存在，如果不存在则创建
-    const imagesBucket = buckets?.Buckets?.find(b => b.Name === 'images');
-    if (!imagesBucket) {
-      const { error: createBucketError } = await s3Client
-        .createBucket({
-          Bucket: 'images',
-          CreateBucketConfiguration: {
-            LocationConstraint: 'us-east-1'
-          }
-        });
-
-      if (createBucketError) {
-        console.error('Create bucket error:', createBucketError);
-        return NextResponse.json(
-          { error: '创建存储空间失败' },
-          { status: 500 }
-        );
-      }
-    }
-
     const formData = await request.formData();
     const file = formData.get('file') as File;
 
