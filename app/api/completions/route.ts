@@ -2,21 +2,26 @@ import { NextRequest, NextResponse } from 'next/server';
 import config from '@/config';
 
 export async function POST(request: NextRequest) {
-  const { searchParams } = new URL(request.url);
-  const model = searchParams.get('model') || 'Qwen/QwQ-32B';
-
   try {
     const body = await request.json();
     
-    // 确保消息数组存在，如果没有则使用默认消息
-    const message = body.message || 'hello'
+    // 确保消息存在
+    const message = body.message || '';
+    if (!message) {
+      return NextResponse.json(
+        { 
+          error: '消息不能为空',
+          status: 'error'
+        },
+        { status: 400 }
+      );
+    }
     
     // 其他可选参数
-    const temperature = body.temperature || 0.7;
-    const max_tokens = body.max_tokens || 512;
-    const top_p = body.top_p || 0.7;
-    const top_k = body.top_k || 50;
-    const frequency_penalty = body.frequency_penalty || 0.5;
+    const temperature = 0.7;  // 保持适度的创造性
+    const max_tokens = 1000;  // 允许更长的回复
+    const top_p = 0.9;       // 提高回复的多样性
+    const frequency_penalty = 0.5;  // 减少重复
 
     // 检查是否有 API 密钥
     const apiKey = config.services.siliconFlow.apiKey;
@@ -24,7 +29,7 @@ export async function POST(request: NextRequest) {
     if (!apiKey) {
       return NextResponse.json(
         { 
-          message: 'Silicon Flow API key is not configured',
+          error: 'Silicon Flow API key is not configured',
           status: 'error'
         },
         { status: 500 }
@@ -38,20 +43,28 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json'
       },
       body: JSON.stringify({
-        model: model,
+        model: 'Qwen/QwQ-32B',
         stream: false,
         max_tokens: max_tokens,
         temperature: temperature,
         top_p: top_p,
-        top_k: top_k,
         frequency_penalty: frequency_penalty,
         n: 1,
         messages: [
           {
-            "content":" 你是一个句子补全专家，请根据用户输入的句子，补全句子。请直接返回补全后的句子，不要输出任何解释。回复中请不要带有任何换行符。",
-            "role":"system"
+            "role": "system",
+            "content": `你是 Nexus AI 导航站的智能客服助手。你需要：
+1. 帮助用户了解和使用 Nexus AI 导航站
+2. 回答用户关于 AI 工具、模型和应用的问题
+3. 提供友好、专业的服务态度
+4. 如果不确定的问题，诚实地表示不知道
+5. 保持回答简洁明了，避免过长的说明
+6. 使用用户的语言进行回复，语气友好自然`
           },
-          {"content":message,"role":"user"}, 
+          {
+            "role": "user",
+            "content": message
+          }
         ]
       })
     };
@@ -63,9 +76,9 @@ export async function POST(request: NextRequest) {
       const errorData = await response.json();
       return NextResponse.json(
         { 
-          message: 'Error from Silicon Flow API',
+          error: '对话服务暂时不可用，请稍后再试',
           status: 'error',
-          error: errorData
+          details: errorData
         },
         { status: response.status }
       );
@@ -75,17 +88,18 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: data.choices[0].message.content,
-      status: 'success',
-      timestamp: new Date().toISOString()
+      status: 'success'
     });
+
   } catch (error) {
+    console.error('Chat error:', error);
     return NextResponse.json(
       { 
-        message: 'Error processing request',
+        error: '处理请求时出错',
         status: 'error',
-        error: (error as Error).message 
+        details: (error as Error).message 
       },
-      { status: 400 }
+      { status: 500 }
     );
   }
 }
