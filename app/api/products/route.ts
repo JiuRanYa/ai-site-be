@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
       }, { status: 400 });
     }
 
+    // 计算正确的偏移量
     const offset = pageSize ? (page - 1) * pageSize : undefined;
     const dbInstance = await db;
 
@@ -40,6 +41,15 @@ export async function GET(request: NextRequest) {
         sql`${products.tags}::text ILIKE ${`%${query}%`}`
       );
     }
+
+    // 添加调试日志
+    console.log('分页参数:', {
+      page,
+      pageSize,
+      offset,
+      query,
+      whereCondition
+    });
     
     // 获取总记录数
     const [{ count }] = await dbInstance
@@ -47,12 +57,18 @@ export async function GET(request: NextRequest) {
       .from(products)
       .where(whereCondition) as [{ count: number }];
 
+    // 添加调试日志
+    console.log('总记录数:', count);
+
     // 获取数据
     let queryBuilder = dbInstance
       .select()
       .from(products)
       .where(whereCondition)
-      .orderBy(sql`${products.createdAt} DESC`);
+      .orderBy(
+        sql`${products.createdAt} DESC`,
+        sql`${products.id} DESC`  // 添加 id 作为第二排序字段
+      );
 
     // 如果指定了分页，添加分页限制
     if (pageSize && offset !== undefined) {
@@ -60,6 +76,13 @@ export async function GET(request: NextRequest) {
     }
 
     const items = await queryBuilder;
+
+    // 添加调试日志
+    console.log('查询结果:', {
+      itemsCount: items.length,
+      firstItemId: items[0]?.id,
+      lastItemId: items[items.length - 1]?.id
+    });
 
     // 计算分页信息
     const totalPages = pageSize ? Math.ceil(count / pageSize) : 1;
