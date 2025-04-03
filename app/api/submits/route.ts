@@ -47,6 +47,26 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // 上传图片到 S3
+    const uploadFormData = new FormData();
+    uploadFormData.append('file', image);
+
+    const uploadResponse = await fetch('http://localhost:3001/api/upload', {
+      method: 'POST',
+      body: uploadFormData
+    });
+
+    if (!uploadResponse.ok) {
+      const error = await uploadResponse.json();
+      return NextResponse.json(
+        { error: '图片上传失败: ' + error.error },
+        { status: 500 }
+      );
+    }
+
+    const res = await uploadResponse.json();
+    const imageUrl = res.data.url;
+
     // 保存到数据库
     const dbInstance = await db;
     const newSubmit = await dbInstance.insert(submits)
@@ -54,8 +74,8 @@ export async function POST(request: NextRequest) {
         title,
         url,
         description: description || null,
-        tags: tags ? JSON.parse(tags) : [],
-        image: image.type, // 只保存图片的文件格式
+        tags: tags ? tags.split(',') : [],
+        image: imageUrl,
         status: 'pending',
         createdAt: new Date(),
         updatedAt: new Date()

@@ -6,7 +6,7 @@ export const submits = pgTable('submits', {
   url: varchar('url', { length: 255 }).notNull(),
   description: text('description'),
   tags: text('tags').array().default([]),
-  image: varchar('image', { length: 50 }).notNull(), // 存储文件格式，如 "image/png"
+  image: text('image'),
   status: varchar('status', { length: 20 }).notNull().default('pending'),
   createdAt: timestamp('created_at').notNull().defaultNow(),
   updatedAt: timestamp('updated_at').notNull().defaultNow()
