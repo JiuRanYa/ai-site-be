@@ -22,6 +22,27 @@
       "when": 1742455161708,
       "tag": "0002_harsh_havok",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1743666991834,
+      "tag": "0003_glamorous_stingray",
+      "breakpoints": true
+    },
+    {
+      "idx": 4,
+      "version": "7",
+      "when": 1743667154507,
+      "tag": "0004_previous_spectrum",
+      "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1743667479638,
+      "tag": "0005_mighty_reavers",
+      "breakpoints": true
     }
   ]
 }
