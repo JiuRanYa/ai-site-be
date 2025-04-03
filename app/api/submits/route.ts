@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     uploadFormData.append('file', image);
 
     // 使用相对路径调用 upload 接口
-    const uploadResponse = await fetch('/api/upload', {
+    const uploadResponse = await fetch('https://api.nexus.skin/api/upload', {
       method: 'POST',
       body: uploadFormData
     });
