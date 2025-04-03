@@ -51,7 +51,8 @@ export async function POST(request: NextRequest) {
     const uploadFormData = new FormData();
     uploadFormData.append('file', image);
 
-    const uploadResponse = await fetch('http://localhost:3001/api/upload', {
+    // 使用相对路径调用 upload 接口
+    const uploadResponse = await fetch('/api/upload', {
       method: 'POST',
       body: uploadFormData
     });
