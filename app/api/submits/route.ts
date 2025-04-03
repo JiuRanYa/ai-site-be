@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import db from "@/db";
 import { submits } from "@/db/schema";
 import { count, eq, sql } from "drizzle-orm";
+import { getApiUrl } from "@/lib/api";
 
 export async function POST(request: NextRequest) {
   try {
@@ -51,8 +52,8 @@ export async function POST(request: NextRequest) {
     const uploadFormData = new FormData();
     uploadFormData.append('file', image);
 
-    // 使用相对路径调用 upload 接口
-    const uploadResponse = await fetch('api/upload', {
+    // 使用 getApiUrl 构建 API URL
+    const uploadResponse = await fetch(getApiUrl('/api/upload'), {
       method: 'POST',
       body: uploadFormData
     });

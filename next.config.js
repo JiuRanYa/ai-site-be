@@ -1,14 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  async rewrites() {
-    return [
-      {
-        source: '/api/:path*',
-        destination: `${process.env.API_URL}/api/:path*`
-      }
-    ]
-  },
   // 配置开发服务器端口
   webpack: (config, { dev, isServer }) => {
     if (dev) {
